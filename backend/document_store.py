@@ -136,15 +136,3 @@ class DocumentStore:
             del index[doc_id]
             self._save_index(index)
             return True
-
-    # ------------------------------------------------------------------
-    # Convenience
-    # ------------------------------------------------------------------
-    def auto_import(self, pdf_path: str | Path) -> Optional[DocumentMeta]:
-        """Import a PDF from disk if the store is empty. No-op otherwise."""
-        if self.list_documents():
-            return None
-        path = Path(pdf_path)
-        if not path.exists():
-            return None
-        return self.add_pdf(path.read_bytes(), path.name)

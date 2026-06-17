@@ -13,8 +13,6 @@ from backend.rag_engine import build_chain
 
 load_dotenv()
 
-LEGACY_PDF = "/Users/waseemahedoo/Documents/0591-basics-of-computer-networking.pdf"
-
 
 class ChatTurn(BaseModel):
     role: str
@@ -33,9 +31,6 @@ state: dict = {}
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     store = DocumentStore()
-    imported = store.auto_import(LEGACY_PDF)
-    if imported:
-        print(f"Auto-imported {imported.filename} ({imported.chunk_count} chunks)")
     state["store"] = store
     yield
     state.clear()
