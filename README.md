@@ -8,7 +8,7 @@ back token by token. The bot keeps conversational context, so follow-up
 questions like "how does it work?" are understood in the context of the
 previous turns.
 
-![Application screenshot](demo.png)
+![Application screenshot](demo-v2.png)
 
 ## Features
 
