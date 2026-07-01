@@ -1,11 +1,13 @@
 import json
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from backend.document_store import DocumentStore
@@ -145,3 +147,12 @@ async def ask(body: AskRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# Serve the built frontend (when present) from the same origin as the API.
+# In the Docker image the Vite build is copied to ./static; in local dev this
+# directory does not exist and the Vite dev server serves the UI instead.
+# Mounted last so the "/api/*" routes above take precedence.
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+if STATIC_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

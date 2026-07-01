@@ -63,13 +63,52 @@ How a question is answered:
 └── README.md
 ```
 
-## Prerequisites
+## Run with Docker (recommended)
+
+The whole app (frontend + backend) ships as a single container that serves the
+UI and the API on one port. You only need Docker and a Groq API key — no Python
+or Node.js on your machine.
+
+```bash
+# Build the image
+docker build -t qna-bot .
+
+# Run it (replace with your key from https://console.groq.com)
+docker run -p 8000:8000 -e GROQ_API_KEY=your_groq_api_key qna-bot
+```
+
+Then open http://localhost:8000 in your browser.
+
+To keep your uploaded PDFs and index between runs, mount a volume for `/app/data`:
+
+```bash
+docker run -p 8000:8000 -e GROQ_API_KEY=your_groq_api_key \
+  -v qna_data:/app/data qna-bot
+```
+
+### Docker Compose
+
+Alternatively, put `GROQ_API_KEY=your_groq_api_key` in a `.env` file next to
+`docker-compose.yml`, then:
+
+```bash
+docker compose up --build
+```
+
+Compose already wires up the port, the API key, and a named volume for
+persistence. The app is available at http://localhost:8000.
+
+> The image pre-downloads the embedding model at build time, so the first
+> question is fast. The build is larger as a result but needs no network at
+> runtime beyond calls to the Groq API.
+
+## Run locally (development)
+
+Use this if you want hot-reloading while working on the code. Prerequisites:
 
 - Python 3.11 or newer (developed on 3.13).
 - Node.js 18 or newer.
 - A Groq API key (free at https://console.groq.com).
-
-## Setup
 
 ### 1. Configure environment variables
 

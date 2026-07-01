@@ -1,0 +1,15 @@
+services:
+  qna-bot:
+    build: .
+    image: qna-bot
+    ports:
+      - "8000:8000"
+    environment:
+      # Reads GROQ_API_KEY from a local .env file (or your shell environment).
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      # Persist uploaded PDFs, the Chroma index, and categories across restarts.
+      - qna_data:/app/data
+
+volumes:
+  qna_data:
