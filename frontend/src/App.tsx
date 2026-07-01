@@ -60,6 +60,11 @@ export default function App() {
     [selectedIds],
   );
 
+  const activeDocs = useMemo(
+    () => documents.filter((d) => selectedIds.has(d.id)),
+    [documents, selectedIds],
+  );
+
   const handleSubmit = useCallback(
     (question: string) => {
       if (documents.length === 0) return;
@@ -111,6 +116,9 @@ export default function App() {
           onStop={stop}
           isStreaming={isStreaming}
           disabled={documents.length === 0}
+          activeDocs={activeDocs}
+          totalDocs={documents.length}
+          onRemoveDoc={toggleDoc}
           placeholder={
             documents.length === 0
               ? 'Upload a PDF first…'

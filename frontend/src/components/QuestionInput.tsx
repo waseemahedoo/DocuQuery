@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import type { DocumentMeta } from '../types';
+
+const MAX_CHIPS = 5;
 
 interface Props {
   onSubmit: (question: string) => void;
   onStop: () => void;
   isStreaming: boolean;
   disabled?: boolean;
+  activeDocs: DocumentMeta[];
+  totalDocs: number;
+  onRemoveDoc: (id: string) => void;
   placeholder?: string;
 }
 
@@ -14,6 +20,9 @@ export function QuestionInput({
   onStop,
   isStreaming,
   disabled,
+  activeDocs,
+  totalDocs,
+  onRemoveDoc,
   placeholder,
 }: Props) {
   const [value, setValue] = useState('');
@@ -24,6 +33,9 @@ export function QuestionInput({
     if (!ta) return;
     ta.style.height = 'auto';
     ta.style.height = `${Math.min(ta.scrollHeight, 320)}px`;
+    // Only show a (vertical) scrollbar once the box has grown to its cap;
+    // otherwise a stray scrollbar overlaps the single-line/placeholder text.
+    ta.style.overflowY = ta.scrollHeight > 320 ? 'auto' : 'hidden';
   }, [value]);
 
   const submit = () => {
@@ -42,8 +54,42 @@ export function QuestionInput({
 
   const canSubmit = value.trim().length > 0 && !isStreaming && !disabled;
 
+  const shownChips = activeDocs.slice(0, MAX_CHIPS);
+  const hiddenCount = activeDocs.length - shownChips.length;
+
   return (
     <div className="input">
+      {totalDocs > 0 && (
+        <div className="input__scope">
+          {activeDocs.length === 0 ? (
+            <span className="input__scope-all">
+              Asking all {totalDocs} document{totalDocs === 1 ? '' : 's'}
+            </span>
+          ) : (
+            <>
+              <span className="input__scope-label">
+                Asking {activeDocs.length} of {totalDocs}:
+              </span>
+              {shownChips.map((d) => (
+                <span className="scope-chip" key={d.id} title={d.filename}>
+                  <span className="scope-chip__name">{d.filename}</span>
+                  <button
+                    type="button"
+                    className="scope-chip__x"
+                    onClick={() => onRemoveDoc(d.id)}
+                    aria-label={`Remove ${d.filename} from selection`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              {hiddenCount > 0 && (
+                <span className="input__scope-more">+{hiddenCount} more</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
       <div className="input__wrap">
         <textarea
           ref={textareaRef}
