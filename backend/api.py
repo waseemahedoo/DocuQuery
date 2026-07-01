@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -23,6 +23,14 @@ class AskRequest(BaseModel):
     question: str
     document_ids: Optional[list[str]] = None
     history: list[ChatTurn] = []
+
+
+class CategoryUpdate(BaseModel):
+    category: str
+
+
+class CategoryCreate(BaseModel):
+    name: str
 
 
 state: dict = {}
@@ -60,17 +68,51 @@ async def list_documents():
     return {"documents": [d.to_dict() for d in _store().list_documents()]}
 
 
+@app.get("/api/categories")
+async def list_categories():
+    return {"categories": _store().list_categories()}
+
+
+@app.post("/api/categories")
+async def create_category(body: CategoryCreate):
+    try:
+        categories = _store().add_category(body.name)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"categories": categories}
+
+
+@app.delete("/api/categories/{name}")
+async def delete_category(name: str):
+    try:
+        categories = _store().delete_category(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"categories": categories}
+
+
 @app.post("/api/documents")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    file: UploadFile = File(...),
+    category: str = Form("Uncategorized"),
+):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="Empty file")
     try:
-        meta = _store().add_pdf(content, file.filename)
+        meta = _store().add_pdf(content, file.filename, category)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+    return meta.to_dict()
+
+
+@app.patch("/api/documents/{doc_id}")
+async def update_document(doc_id: str, body: CategoryUpdate):
+    meta = _store().set_category(doc_id, body.category)
+    if meta is None:
+        raise HTTPException(status_code=404, detail="Document not found")
     return meta.to_dict()
 
 

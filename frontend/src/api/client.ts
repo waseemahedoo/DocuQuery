@@ -63,14 +63,66 @@ export async function listDocuments(): Promise<DocumentMeta[]> {
   return data.documents;
 }
 
-export async function uploadDocument(file: File): Promise<DocumentMeta> {
+const CATEGORIES = '/api/categories';
+
+export async function listCategories(): Promise<string[]> {
+  const res = await fetch(CATEGORIES);
+  if (!res.ok) throw new Error(`Failed to list categories: ${res.status}`);
+  const data = (await res.json()) as { categories: string[] };
+  return data.categories;
+}
+
+export async function createCategory(name: string): Promise<string[]> {
+  const res = await fetch(CATEGORIES, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`Create category failed: ${res.status} ${detail}`);
+  }
+  const data = (await res.json()) as { categories: string[] };
+  return data.categories;
+}
+
+export async function deleteCategory(name: string): Promise<string[]> {
+  const res = await fetch(`${CATEGORIES}/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`Delete category failed: ${res.status} ${detail}`);
+  }
+  const data = (await res.json()) as { categories: string[] };
+  return data.categories;
+}
+
+export async function uploadDocument(
+  file: File,
+  category: string,
+): Promise<DocumentMeta> {
   const form = new FormData();
   form.append('file', file);
+  form.append('category', category);
   const res = await fetch(DOCS, { method: 'POST', body: form });
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`Upload failed: ${res.status} ${detail}`);
   }
+  return (await res.json()) as DocumentMeta;
+}
+
+export async function updateDocumentCategory(
+  id: string,
+  category: string,
+): Promise<DocumentMeta> {
+  const res = await fetch(`${DOCS}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category }),
+  });
+  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
   return (await res.json()) as DocumentMeta;
 }
 

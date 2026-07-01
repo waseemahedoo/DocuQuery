@@ -9,10 +9,14 @@ export default function App() {
   const { messages, isStreaming, sendMessage, stop, clear } = useChat();
   const {
     documents,
+    categories,
     loading,
     uploading,
     error,
     upload,
+    setCategory,
+    addCategory,
+    removeCategory,
     remove,
   } = useDocuments();
 
@@ -33,6 +37,10 @@ export default function App() {
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
+  }, []);
+
+  const selectMany = useCallback((ids: string[]) => {
+    setSelectedIds(new Set(ids));
   }, []);
 
   const handleDelete = useCallback(
@@ -70,11 +78,16 @@ export default function App() {
         loading={loading}
         uploading={uploading}
         error={error}
+        categories={categories}
         onToggle={toggleDoc}
         onSelectAll={selectAll}
         onClearSelection={clearSelection}
+        onSelectMany={selectMany}
         onUpload={upload}
         onDelete={handleDelete}
+        onChangeCategory={setCategory}
+        onAddCategory={addCategory}
+        onDeleteCategory={removeCategory}
         onNewChat={clear}
       />
       <div className="content">

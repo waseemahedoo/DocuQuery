@@ -1,20 +1,86 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 interface Props {
-  onUpload: (file: File) => void | Promise<void>;
+  onUpload: (file: File, category: string) => void | Promise<unknown>;
   uploading: boolean;
+  categories: string[];
 }
 
-export function UploadButton({ onUpload, uploading }: Props) {
+export function UploadButton({ onUpload, uploading, categories }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [category, setCategory] = useState('');
 
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      await onUpload(file);
-    }
+    if (file) setPendingFile(file);
     if (inputRef.current) inputRef.current.value = '';
   };
+
+  const confirm = async () => {
+    if (!pendingFile) return;
+    const file = pendingFile;
+    const chosen = category.trim() || 'Uncategorized';
+    setPendingFile(null);
+    setCategory('');
+    await onUpload(file, chosen);
+  };
+
+  const cancel = () => {
+    setPendingFile(null);
+    setCategory('');
+  };
+
+  if (pendingFile) {
+    return (
+      <div className="upload-form">
+        <div className="upload-form__file" title={pendingFile.name}>
+          {pendingFile.name}
+        </div>
+        <input
+          className="upload-form__input"
+          list="category-options"
+          value={category}
+          autoFocus
+          placeholder="Category (e.g. Cooking)"
+          onChange={(e) => setCategory(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') confirm();
+            if (e.key === 'Escape') cancel();
+          }}
+        />
+        <datalist id="category-options">
+          {categories.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <div className="upload-form__actions">
+          <button
+            type="button"
+            className="upload-btn"
+            onClick={confirm}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <>
+                <span className="spinner" /> Indexing…
+              </>
+            ) : (
+              'Add'
+            )}
+          </button>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={cancel}
+            disabled={uploading}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -30,4 +30,5 @@ export interface DocumentMeta {
   page_count: number;
   chunk_count: number;
   chapters: number[];
+  category: string;
 }
